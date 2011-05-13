@@ -1,0 +1,54 @@
+<?php
+/**
+* Implementation of hook_block().
+* Adds a block that has new text.
+*/
+	function ctn_location_import_block($op = 'list', $delta = 0, $edit = array()) 
+	{
+	  switch ($op) 
+		{
+			case 'list':
+				  $blocks[0]['info'] = t('CTN Location Import Module');
+				  return $blocks;
+			case 'view':
+				  $block[0]['subject'] = t('CTN Location Import Module');
+				  $block[0]['content'] = t('Location Import');
+				   return $block[$delta];
+		}
+
+	}
+
+	function ctn_location_import_form() 
+	{
+		$form = array();
+
+		$form['ctn_location_import_form'] = array(
+			'#type' => 'textarea',
+			'#title' => t('Locations'),
+			'#default_value' => variable_get('ctn_location_import_maxdisp', 3),
+			'#size' => 2,
+			'#maxlength' => 2,
+			'#description' => t("The maximum number of links to display in the block."),
+			'#required' => TRUE,
+			
+
+		);
+
+		return system_settings_form($form);
+	}
+
+	function ctn_location_import_menu() 
+	{
+		$items = array();
+
+		$items['admin/settings/ctn_location_import'] = array(
+		'title' => t('Location Import'),
+		'description' => t('Description of your On this date settings page'),
+		'page callback' => 'drupal_get_form',
+		'page arguments' => array('ctn_location_import_admin'),
+		'access arguments' => array('access administration pages'),
+		'type' => MENU_NORMAL_ITEM,
+		);
+
+		return $items;
+	}	

@@ -1,0 +1,4 @@
+name = ctn_location_import
+description = Importing Information about Locations
+package = CTN Bayarea
+core = 6.x
