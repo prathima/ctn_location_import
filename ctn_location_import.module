@@ -15,40 +15,262 @@
 				  $block[0]['content'] = t('Location Import');
 				   return $block[$delta];
 		}
+	}
+	
+	function ctn_location_import_menu() 
+	{
+		$items = array();
 
+		$items['directory/ctn_location_import'] = array(
+			'title' => t('Location Import'),
+			'description' => t('Description of your On this date settings page'),
+			'page callback' => 'ctn_location_import_show_form',
+			'access arguments' => array('access administration pages'),
+			'type' => MENU_NORMAL_ITEM,
+		);
+
+		return $items;
+	}
+	
+	function ctn_location_import_show_form()
+	{
+		return drupal_get_form('ctn_location_import_form');
 	}
 
 	function ctn_location_import_form() 
 	{
 		$form = array();
-
-		$form['ctn_location_import_form'] = array(
-			'#type' => 'textarea',
-			'#title' => t('Locations'),
-			'#default_value' => variable_get('ctn_location_import_maxdisp', 3),
-			'#size' => 2,
-			'#maxlength' => 2,
-			'#description' => t("The maximum number of links to display in the block."),
-			'#required' => TRUE,
-			
-
+		
+		$form['#attributes'] = array('enctype' => "multipart/form-data");
+		$form['upload_file'] = array(
+			'#type' => 'file'
 		);
-
-		return system_settings_form($form);
+		
+		 $form['submit'] = array(
+			'#type' => 'submit',
+			'#value' => t('Upload'),
+		  );
+		
+		return $form;
 	}
-
-	function ctn_location_import_menu() 
+	
+	function ctn_location_import_form_submit($form_id, $form_values) 
 	{
-		$items = array();
-
-		$items['admin/settings/ctn_location_import'] = array(
-		'title' => t('Location Import'),
-		'description' => t('Description of your On this date settings page'),
-		'page callback' => 'drupal_get_form',
-		'page arguments' => array('ctn_location_import_admin'),
-		'access arguments' => array('access administration pages'),
-		'type' => MENU_NORMAL_ITEM,
-		);
-
-		return $items;
-	}	
+		$limits = array();
+		$validators = array('file_validate_extensions' => array($limits['extensions']));
+		
+		if ($file = file_save_upload('upload_file', $validators, file_directory_path())) 
+		{
+			$row = 1;
+			if (($handle = fopen($file->filepath, "r")) !== FALSE) 
+			{
+				while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) 
+				{
+					if($row == 2)
+					{
+						global $langauges;
+						$langauges = array($data[15], $data[16], $data[17], $data[18], $data[19], $data[20], $data[21],
+							$data[22], $data[23], $data[24], $data[25], $data[26], $data[27], $data[28], $data[29],
+							$data[30], $data[31], $data[32], $data[33], $data[34], $data[35], $data[36], $data[37], $data[38], $data[39]);
+						save_languages($data);
+						save_org_type($data);
+						save_tug($data);
+						save_tos($data);
+						save_other_hardware($data);
+						save_operating_systems($data);
+					}
+					
+					if($row > 2) 
+					{
+						save_location($data);
+					}
+					$row++;
+				}
+			}
+			$message = 'Uploaded CSV file to DB.';
+			drupal_set_message(t($message));
+		}
+	}
+	
+	function save_location($data)
+	{
+		$name = mysql_real_escape_string($data[0]);
+		$address1 = mysql_real_escape_string($data[1]);
+		$address2 = mysql_real_escape_string($data[2]);
+		$city = mysql_real_escape_string($data[3]);
+		$state = mysql_real_escape_string($data[4]);
+		$zip = mysql_real_escape_string($data[5]);
+		$phone = mysql_real_escape_string($data[6]);
+		$website = mysql_real_escape_string($data[7]);
+		$email = mysql_real_escape_string($data[8]);
+		$about_org = mysql_real_escape_string($data[9]);
+		$about_program_offered = mysql_real_escape_string($data[10]);
+		$access_rights = mysql_real_escape_string($data[11]);
+		$drop_infees = mysql_real_escape_string($data[12]);
+		$class_workshop_fee = mysql_real_escape_string($data[13]);
+		$number_of_computers = intval($data[14]);
+		
+		if(!empty($name))
+		{
+			
+			$result = db_result(db_query('select * from ctn_location where name = "%s"', $name));
+			if (!$result)
+			{
+				$all_fields = "name, address1, address2, city, state, zip, phone, website, 
+					email, about_org, about_program_offered,
+					access_rights, drop_infees, class_workshop_fee, number_of_computers";
+				$all_values = "'$name', '$address1', '$address2', '$city', '$state', '$zip', '$phone', '$website', 
+					'$email','$about_org', '$about_program_offered', 
+					'$access_rights', '$drop_infees', '$class_workshop_fee', '$number_of_computers'";
+				$query = "INSERT INTO ctn_location ($all_fields) VALUES ($all_values)";
+				
+				$result = db_result(db_query('select * from ctn_location where name = "%s"', $name));
+			}
+			else
+			{
+				// TODO: Update Query is not complete
+				$query = "update ctn_location set address1 = '$address1'" . "where id = " .$result['id'];
+				db_query($query);
+			}
+			
+			assign_lanagauges_to_location($result['id'], $data);
+		}
+	}
+	
+	function save_languages($data)
+	{
+		for ($c=15; $c < 39; $c++) {
+			$name = mysql_real_escape_string($data[$c]);
+			
+			if(!empty($name))
+			{				
+				$all_fields = "name";
+				$all_values = "'$name'"; 
+				$result = db_result(db_query('select * from ctn_languages where name = "%s"', $name));
+				if (!$result)
+				{
+					$query = "INSERT INTO ctn_languages ($all_fields) VALUES ($all_values)";
+					db_query($query);
+				}
+			}
+		}
+	}
+	
+	function save_org_type($data)
+	{
+		for ($c=39; $c < 55; $c++) 
+		{
+			$name = mysql_real_escape_string($data[$c]);
+			
+			if(!empty($name))
+			{				
+				$all_fields = "name";
+				$all_values = "'$name'"; 
+				$result = db_result(db_query('select * from ctn_corg_type where name = "%s"', $name));
+				if (!$result)
+				{
+					$query = "INSERT INTO ctn_corg_type ($all_fields) VALUES ($all_values)";
+					db_query($query);
+				}
+			}
+		}
+	}
+	
+	function save_tug($data)
+	{
+		for ($c=55; $c <64; $c++) 
+		{
+			$name = mysql_real_escape_string($data[$c]);
+			
+			if(!empty($name))
+			{				
+				$all_fields = "name";
+				$all_values = "'$name'"; 
+				$result = db_result(db_query('select * from ctn_tug where name = "%s"', $name));
+				if (!$result)
+				{
+					$query = "INSERT INTO ctn_tug ($all_fields) VALUES ($all_values)";
+					db_query($query);
+				}
+			}
+		}
+	}
+	
+	function save_tos($data)
+	{
+		for ($c=64; $c <88; $c++) 
+		{
+			$name = mysql_real_escape_string($data[$c]);
+			
+			if(!empty($name))
+			{				
+				$all_fields = "name";
+				$all_values = "'$name'"; 
+				$result = db_result(db_query('select * from ctn_tos where name = "%s"', $name));
+				if (!$result)
+				{
+					$query = "INSERT INTO ctn_tos ($all_fields) VALUES ($all_values)";
+					db_query($query);
+				}
+			}
+		}
+	}
+	function save_other_hardware($data)
+	{
+		for ($c=88; $c <98; $c++) 
+		{
+			$name = mysql_real_escape_string($data[$c]);
+			
+			if(!empty($name))
+			{				
+				$all_fields = "name";
+				$all_values = "'$name'"; 
+				$result = db_result(db_query('select * from ctn_other_hardware where name = "%s"', $name));
+				if (!$result)
+				{
+					$query = "INSERT INTO ctn_other_hardware ($all_fields) VALUES ($all_values)";
+					db_query($query);
+				}
+			}
+		}
+	}
+	function save_operating_systems($data)
+	{
+		for ($c=98; $c <106; $c++)
+		{
+			$name = mysql_real_escape_string($data[$c]);
+			
+			if(!empty($name))
+			{				
+				$all_fields = "name";
+				$all_values = "'$name'"; 
+				$result = db_result(db_query('select * from ctn_operating_systems where name = "%s"', $name));
+				if (!$result)
+				{
+					$query = "INSERT INTO ctn_operating_systems ($all_fields) VALUES ($all_values)";
+					db_query($query);
+				}
+			}
+		}
+	}
+	function assign_lanagauges_to_location($location_id, $data)
+	{
+		print_r("In assign ");
+		for($c=15; $c<=39; $c++)
+		{
+			$language_name = mysql_real_escape_string($langauges[$c-15]);
+			print_r("$language_name");
+			
+			$langauge_result = db_result(db_query('select * from ctn_languages where name = "%s"', $language_name));
+			if($langauge_result)
+			{
+				$languages_id = $language_result['id'];
+				$loc_lang_result = db_result(db_query('select * from ctn_location_languages where location_id = %d and languages_id = %d', $location_id, $languages_id));
+				if(!$loc_lang_result)
+				{
+					$query = "INSERT INTO ctn_location_languages(location_id, languages_id) VALUES($location_id, $languages_id)";
+					$result = db_query($query);
+				}
+			}
+		}
+	}
