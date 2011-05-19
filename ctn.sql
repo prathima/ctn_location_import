@@ -117,7 +117,42 @@ select la.name, lo.name
   join languages la on la.id = ll.languages_id
 
 
-	
+SELECT * FROM ctn_location c;
+
+SELECT * FROM ctn_location_languages c join ctn_languages l on l.id = c.languages_id order by c.location_id;
+
+SELECT * FROM ctn_location_tug c join ctn_tug l on l.id = c.tug_id order by c.location_id;
+
+SELECT * FROM ctn_location_tos c join ctn_tos l on l.id = c.tos_id order by c.location_id;
+
+SELECT * FROM ctn_location_oh c join ctn_other_hardware l on l.id = c.oh_id order by c.location_id;
+
+SELECT * FROM ctn_location_os c join ctn_operating_systems l on l.id = c.os_id order by c.location_id;
+
+SELECT * FROM ctn_location_org c join ctn_org_type l on l.id = c.org_id order by c.location_id;
+
+SELECT * FROM ctn_org_type c;
+
+SELECT * FROM ctn_location c;
+
+SELECT * FROM ctn_tug c;
+SELECT * FROM ctn_org_type c;
+
+SELECT * FROM ctn_location_info c;
+
+truncate ctn_location_tos;
+truncate ctn_location_tug;
+truncate ctn_location_org;
+truncate ctn_location_oh;
+truncate ctn_location_os;
+truncate ctn_location_languages;
+truncate ctn_languages;
+truncate ctn_location;
+truncate ctn_tos;
+truncate ctn_tug;
+truncate ctn_org_type;
+truncate ctn_operating_systems;
+truncate ctn_other_hardware;
 
 
 	
