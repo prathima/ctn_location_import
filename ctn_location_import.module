@@ -68,36 +68,35 @@
 				{
 					if($row == 2)
 					{
-						$langauges = array($data[15], $data[16], $data[17], $data[18], $data[19], $data[20], $data[21],
-							$data[22], $data[23], $data[24], $data[25], $data[26], $data[27], $data[28], $data[29],
-							$data[30], $data[31], $data[32], $data[33], $data[34], $data[35], $data[36], $data[37], $data[38]);
-						save_languages($data);
+						$languages = array($data[15], $data[16], $data[17], $data[18], $data[19], $data[20], $data[21],
+								$data[22], $data[23], $data[24], $data[25], $data[26], $data[27], $data[28], $data[29],
+								$data[30], $data[31], $data[32], $data[33], $data[34], $data[35], $data[36], $data[37], $data[38], $data[39]);
+						save_ctnterms($data, "Languages Served", 15, 39);
 						
-						$organization_type = array($data[39], $data[40], $data[41], $data[42], $data[43], $data[44], $data[45], $data[46],
-							$data[47], $data[48],$data[49], $data[50], $data[51], $data[52], $data[53], $data[54]);
-						save_org_type($data);
+						$org_types = array($data[39], $data[40], $data[41], $data[42], $data[43], $data[44], $data[45], $data[46],
+								$data[47], $data[48],$data[49], $data[50], $data[51], $data[52], $data[53], $data[54]);
+						save_ctnterms($data, "Organization Type", 39, 54);
 						
-						$target_user_group = array($data[55], $data[56], $data[57], $data[58], $data[59], $data[60], $data[61], $data[62],
-							$data[63]);
-						save_tug($data);
+						$target_user_groups = array($data[55], $data[56], $data[57], $data[58], $data[59], $data[60], $data[61], $data[62],$data[63]);
+						save_ctnterms($data, "Target User Groups", 55, 64);
 						
 						$types_of_services = array($data[64], $data[65], $data[66], $data[67], $data[68], $data[69], $data[70], $data[71],
-							$data[72],$data[73],$data[74],$data[75],$data[76],$data[77],$data[78],$data[79],$data[80],
-							$data[81],$data[82],$data[83],$data[84],$data[85],$data[86],$data[87]);
-						save_tos($data);
+								$data[72],$data[73],$data[74],$data[75],$data[76],$data[77],$data[78],$data[79],$data[80],$data[81],
+								$data[82],$data[83],$data[84],$data[85],$data[86],$data[87]);
+						save_ctnterms($data, "Types of Services", 64, 87);
 						
-						$other_hardware = array($data[88], $data[89], $data[90], $data[91], $data[92], $data[93], $data[94], $data[95],
-							$data[96],$data[97]);
-						save_other_hardware($data);
+						 $other_hardware = array($data[88], $data[89], $data[90], $data[91], $data[92], $data[93], $data[94], $data[95],
+								$data[96],$data[97]);
+						save_ctnterms($data, "Other Hardware", 88, 97);
 						
 						$operating_systems = array($data[98], $data[99], $data[100], $data[101], $data[102], $data[103], $data[104], $data[105]);
-						save_operating_systems($data);
+						save_ctnterms($data, "Operating System", 98, 105);
+
+						
 					}
-					
-					if($row>2) 
+					if($row > 2)
 					{
-						save_location($data, $langauges, $target_user_group, $types_of_services, $other_hardware ,$operating_systems,
-										$organization_type);
+						create_location_node($data, $languages, $org_types, $target_user_groups, $types_of_services, $other_hardware, $operating_systems );
 					}
 					$row++;
 				}
@@ -107,333 +106,113 @@
 		}
 	}
 	
-	function save_location($data, $langauges, $target_user_group, $types_of_services, $other_hardware, $operating_systems, $organization_type)
+	
+	function create_location_node($data, $languages, $org_types, $target_user_groups, $types_of_services, $other_hardware, $operating_systems )
 	{
-		$name = mysql_real_escape_string($data[0]);
-		$address1 = db_escape_string(trim($data[1]));
-		$address2 = mysql_real_escape_string($data[2]);
-		$city = mysql_real_escape_string($data[3]);
-		$state = mysql_real_escape_string($data[4]);
-		$zip = mysql_real_escape_string($data[5]);
-		$phone = mysql_real_escape_string($data[6]);
-		$website = mysql_real_escape_string($data[7]);
-		$email = mysql_real_escape_string($data[8]);
-		$about_org = db_encode_blob($data[9]);
-		$about_program_offered = db_encode_blob($data[10]);
-		$access_rights = mysql_real_escape_string($data[11]);
-		$drop_infees = mysql_real_escape_string($data[12]);
-		$class_workshop_fee = mysql_real_escape_string($data[13]);
+		$name = $data[0];
+		$address1 = $data[1];
+		$address2 = $data[2];
+		$city = $data[3];
+		$state = $data[4];
+		$zip = $data[5];
+		$phone = $data[6];
+		$website = $data[7];
+		$email = $data[8];
+		$about_org = $data[9];
+		$about_program_offered = $data[10];
+		$access_rights = $data[11];
+		$drop_infees = $data[12];
+		$class_workshop_fee = $data[13];
 		$number_of_computers = intval($data[14]);
-		
+
 		if(!empty($name))
 		{
-			$query = "select id from ctn_location where name = '$name'";
-			$result = db_fetch_array(db_query($query));
-			if (!$result)
+			$node = new stdClass();
+			$node->title = trim($name);
+			$node->body = preg_replace('/[^(\x20-\x7F)]*/','', trim($about_org));
+			$node->type = 'page';
+			$node->created = time();
+			$node->changed = $node->created;
+			$node->status  = 1;
+			$node->promote = 1;
+			$node->sticky  = 0;
+			$node->format  = 1;
+			$node->uid = $user->id;
+			
+			$result = db_fetch_array(db_query('select * from node where title = "%s" limit 1', $name));
+			if(!$result)
 			{
-				$all_fields = "name, address1, address2, city, state, zip, phone, website, 
-					email, about_org, about_program_offered,
-					access_rights, drop_infees, class_workshop_fee, number_of_computers";
-				$all_values = "'$name', '$address1', '$address2', '$city', '$state', '$zip', '$phone', '$website', 
-					'$email',$about_org, $about_program_offered, '$access_rights', '$drop_infees', '$class_workshop_fee', '$number_of_computers'";
-					
-				$query = "INSERT INTO ctn_location ($all_fields) VALUES ($all_values)";
-				
-				db_query($query);
-					
-				$result = db_fetch_array(db_query('select * from ctn_location where name = "%s"', $name));	
+				drupal_set_message(t("Adding new Node: ".$name), "warning");
 			}
 			else
 			{
-				$location_id = $result['id'];
-				$query = "update ctn_location set name = '$name', address1 = '$address1', address2 = '$address2',
-						city = '$city',state = '$state', zip = '$zip', phone = '$phone', website = '$website', email = '$email',
-						about_org = $about_org, about_program_offered = $about_program_offered, access_rights = '$access_rights',
-						drop_infees = '$drop_infees', class_workshop_fee = '$class_workshop_fee', number_of_computers = '$number_of_computers'
-						where id = " .$location_id;
-					db_query($query);
+				drupal_set_message(t("Updating Node: ".$name."(".$result['nid'] .")"), "warning");
+				$node->nid = $result['nid'];
 			}
+			node_save($node);
 			
-			$location_id = $result['id'];
-			assign_lanagauges_to_location($location_id, $data, $langauges);
-			assign_org_to_location($location_id, $data, $organization_type);
-			assign_tug_to_location($location_id, $data, $target_user_group);
-			assign_tos_to_location($location_id, $data, $types_of_services);
-			assign_oh_to_location($location_id, $data, $other_hardware);
-			assign_os_to_location($location_id, $data, $operating_systems);
-			set_location_info($location_id, $data);
-		}	
-	}
-	
-	function save_languages($data)
-	{
-		for ($c=15; $c < 39; $c++) {
-			$name = mysql_real_escape_string($data[$c]);
-			
-			if(!empty($name))
-			{				
-				$all_fields = "name";
-				$all_values = "'$name'"; 
-				$result = db_fetch_array(db_query('select * from ctn_languages where name = "%s"', $name));
-				if (!$result)
-				{
-					$query = "INSERT INTO ctn_languages ($all_fields) VALUES ($all_values)";
-					db_query($query);
-				}
-			}
+			assign_ctnterms_to_location($node->nid, $data, $languages, $org_types, $target_user_groups, $types_of_services, $other_hardware, $operating_systems );
 		}
 	}
 	
-	function save_org_type($data)
+	function save_ctnterms($data, $vocabName, $start, $end)
 	{
-		for ($c=39; $c < 55; $c++) 
+		for ($c=$start; $c < $end; $c++) 
 		{
-			$name = mysql_real_escape_string($data[$c]);
-			
+			$name = trim($data[$c]);
 			if(!empty($name))
-			{				
-				$all_fields = "name";
-				$all_values = "'$name'"; 
-				$result = db_fetch_array(db_query('select * from ctn_org_type where name = "%s"', $name));
-				if (!$result)
-				{
-					$query = "INSERT INTO ctn_org_type ($all_fields) VALUES ($all_values)";
-					db_query($query);
-				}
-			}
-		}
-	}
-	
-	function save_tug($data)
-	{
-		for ($c=55; $c <64; $c++) 
-		{
-			$name = mysql_real_escape_string($data[$c]);
-			
-			if(!empty($name))
-			{				
-				$all_fields = "name";
-				$all_values = "'$name'"; 
-				$result = db_fetch_array(db_query('select * from ctn_tug where name = "%s"', $name));
-				if (!$result)
-				{
-					$query = "INSERT INTO ctn_tug ($all_fields) VALUES ($all_values)";
-					db_query($query);
-				}
-			}
-		}
-	}
-	
-	function save_tos($data)
-	{
-		for ($c=64; $c <88; $c++) 
-		{
-			$name = mysql_real_escape_string($data[$c]);
-			
-			if(!empty($name))
-			{				
-				$all_fields = "name";
-				$all_values = "'$name'"; 
-				$result = db_fetch_array(db_query('select * from ctn_tos where name = "%s"', $name));
-				if (!$result)
-				{
-					$query = "INSERT INTO ctn_tos ($all_fields) VALUES ($all_values)";
-					db_query($query);
-				}
-			}
-		}
-	}
-	function save_other_hardware($data)
-	{
-		for ($c=88; $c <98; $c++) 
-		{
-			$name = mysql_real_escape_string($data[$c]);
-			
-			if(!empty($name))
-			{				
-				$all_fields = "name";
-				$all_values = "'$name'"; 
-				$result = db_fetch_array(db_query('select * from ctn_other_hardware where name = "%s"', $name));
-				if (!$result)
-				{
-					$query = "INSERT INTO ctn_other_hardware ($all_fields) VALUES ($all_values)";
-					db_query($query);
-				}
-			}
-		}
-	}
-	function save_operating_systems($data)
-	{
-		for ($c=98; $c <106; $c++)
-		{
-			$name = mysql_real_escape_string($data[$c]);
-			
-			if(!empty($name))
-			{				
-				$all_fields = "name";
-				$all_values = "'$name'"; 
-				$result = db_fetch_array(db_query('select * from ctn_operating_systems where name = "%s"', $name));
-				if (!$result)
-				{
-					$query = "INSERT INTO ctn_operating_systems ($all_fields) VALUES ($all_values)";
-					db_query($query);
-				}
-			}
-		}
-	}
-	
-	function assign_lanagauges_to_location($location_id, $data, $langauges)
-	{
-		for($c=15; $c<39; $c++)
-		{
-			if($data[$c] == 'y' || $data[$c] == 'Y')
 			{
-				$language_name = mysql_real_escape_string($langauges[$c-15]);
+				add_ctnterms_taxonomy($name, $vocabName);
+			}
+		}
+	}
+	
+	function add_ctnterms_taxonomy($language, $vocabName) 
+	{
+		$language_results = taxonomy_get_term_by_name($language);
+
+		$vocabularies = taxonomy_get_vocabularies();
+		foreach($vocabularies as &$vocab)
+		{
+			if($vocab->name == $vocabName)
+			{
+				$language_form['name'] = $language;
+				$language_form['vid'] = $vocab->vid;
+				$language_form['tid'] = $language_results[0]->tid;
+				taxonomy_save_term($language_form);
+			}
+		}
+	}
+	
+	function assign_ctnterms_to_location($nid, $data, $languages, $org_types, $target_user_groups, $types_of_services, $other_hardware, $operating_systems)
+	{
+		$terms = array();
+		$node = node_load($nid);
+		$terms = array_merge($terms, get_terms($data, $node, $languages, 15, 39));
+		$terms = array_merge($terms, get_terms($data, $node, $org_types, , 40, 55));
+		$terms = array_merge($terms, get_terms($data, $node, $target_user_groups, 56, 63));
+		$terms = array_merge($terms, get_terms($data, $node, $types_of_services, 64, 87));
+		$terms = array_merge($terms, get_terms($data, $node, $other_hardware, 88, 97));
+		$terms = array_merge($terms, get_terms($data, $node, $operating_systems, 98, 105));
+		
+		taxonomy_node_save($node, $terms);
+	}
+	
+	function get_terms($data, $node, $ctn_terms, $start, $end)
+	{
+		$ctn_taxonomy_terms = array();
+		for ($c = $start; $c <= $end; $c++) 
+		{
+			if(trim($data[$c]) == 'y' || trim($data[$c]) == 'Y')
+			{
+				$ctn_term = trim($ctn_terms[$c-$start]);
+				$ctn_term_results = taxonomy_get_term_by_name($ctn_term);
+				$tid = $ctn_term_results[0]->tid;
 				
-				$language_result = db_fetch_array(db_query('select * from ctn_languages where name = "%s"', $language_name));
-				$languages_id = $language_result['id'];
-				$loc_lang_result = db_fetch_array(db_query('select * from ctn_location_languages where location_id = %d and languages_id = %d', $location_id, $languages_id));
-				if(!$loc_lang_result && $languages_id && $location_id)
-				{
-					$query = "INSERT INTO ctn_location_languages(location_id, languages_id) VALUES($location_id, $languages_id)";
-					$log_message .= $query."<br/>";	
-					$result = db_query($query);
-				}
+				drupal_set_message(t("Setting CTN Term: ".$ctn_term."(".$tid.") to : ".$node->title."-".$node->nid), "warning");
+				array_push($ctn_taxonomy_terms, $tid);
 			}
 		}
-	}
-	
-	function assign_org_to_location($location_id, $data, $orgs)
-	{
-		for($c=39; $c<55; $c++)
-		{
-			$organization_type_name = mysql_real_escape_string($orgs[$c-39]);
-			$query= "select * from ctn_org_type where name = '$organization_type_name'";
-			$org_result = db_fetch_array(db_query($query));
-			if($org_result && ($data[$c] == 'y' || $data[$c] == 'Y'))
-			{
-				$org_id = $org_result['id'];
-				$loc_org_result = db_fetch_array(db_query('select * from ctn_location_org where location_id = %d and org_id = %d', $location_id, $org_id));
-				//drupal_set_message(t("Org Id: ".$org_id), "warning");
-				if(!$loc_org_result && $location_id && $org_id)
-				{
-					$query = "INSERT INTO ctn_location_org(location_id, org_id) VALUES ($location_id, $org_id)";
-					$result = db_query($query);
-				}
-			}
-			
-		}
-		
-	}
-	function assign_tug_to_location($location_id, $data, $tugs)
-	{
-		for($c=55; $c<64; $c++)
-		{
-			$target_user_group_name = mysql_real_escape_string($tugs[$c-55]);
-			$query= "select * from ctn_tug where name = '$target_user_group_name'";
-			$tug_result = db_fetch_array(db_query($query));
-			if($tug_result && ($data[$c] == 'y' || $data[$c] == 'Y'))
-			{
-				$tug_id = $tug_result['id'];
-				$log_message .= $tug_id."<br/>";
-				$loc_tug_result = db_fetch_array(db_query('select * from ctn_location_tug where location_id = %d and tug_id = %d', $location_id, $tug_id));
-				if(!$loc_tug_result && $location_id && $tug_id)
-				{
-					$query = "INSERT INTO ctn_location_tug(location_id, tug_id) VALUES ($location_id, $tug_id)";
-					$result = db_query($query);
-				}
-			}
-			
-		}
-		
-	}
-	
-	function assign_tos_to_location($location_id, $data, $toss)
-	{
-		
-		for($c=64; $c<88; $c++)
-			{
-				$types_of_services_name = mysql_real_escape_string($toss[$c-64]);
-				$query= "select * from ctn_tos where name = '$types_of_services_name'";
-				$tos_result = db_fetch_array(db_query($query));
-				if($tos_result && ($data[$c] == 'y' || $data[$c] == 'Y'))
-				{
-					$tos_id = $tos_result['id'];
-					$loc_tos_result = db_fetch_array(db_query('select * from ctn_location_tos where location_id = %d and tos_id = %d', $location_id, $tos_id));
-					if (!$loc_tos_result && $location_id && $tos_id) 
-					{
-						$query = "INSERT INTO ctn_location_tos(location_id, tos_id) VALUES($location_id, $tos_id)";
-						$result = db_query($query);
-					}
-				}
-			}
-	}
-	
-	function assign_oh_to_location($location_id, $data, $ohs)
-	{
-		
-		for ($c=88; $c <97; $c++) 
-			{
-				$other_hardware_name = mysql_real_escape_string($ohs[$c-88]);
-				$query= "select * from ctn_other_hardware where name = '$other_hardware_name'";
-				$oh_result = db_fetch_array(db_query($query));
-				if($oh_result && ($data[$c] == 'y' || $data[$c] == 'Y'))
-				{
-					$oh_id = $oh_result['id'];
-					$loc_oh_result = db_fetch_array(db_query('select * from ctn_location_oh where location_id = %d and oh_id = %d', $location_id, $oh_id));
-					if (!$loc_oh_result && $location_id && $oh_id) 
-					{
-						$query = "INSERT INTO ctn_location_oh(location_id, oh_id) VALUES($location_id, $oh_id)";
-						$result = db_query($query);
-					}
-				}
-			}
-	}
-	
-	function assign_os_to_location($location_id, $data, $oss)
-	{
-		
-		for($c=98; $c<106; $c++)
-			{
-				$operating_systems_name = mysql_real_escape_string($oss[$c-98]);
-				$query= "select * from ctn_operating_systems where name = '$operating_systems_name'";
-				$os_result = db_fetch_array(db_query($query));
-				if($os_result && ($data[$c] == 'y' || $data[$c] == 'Y'))
-				{
-					$os_id = $os_result['id'];
-					$loc_os_result = db_fetch_array(db_query('select * from ctn_location_os where location_id = %d and os_id = %d', $location_id, $os_id));
-					if (!$loc_os_result && $location_id && $os_id) 
-					{
-						$query = "INSERT INTO ctn_location_os(location_id, os_id) VALUES($location_id, $os_id)";
-						$result = db_query($query);
-					}
-				}
-			}
-	}
-	
-	function set_location_info($location_id, $data)
-	{
-		$wheelchair_accessible = empty($data[107]) ? 0 : 1; 
-		$shareable_rent = empty($data[108]) ? 0 : 1; ;
-		$logo = mysql_real_escape_string($data[109]);
-		$picture = mysql_real_escape_string($data[110]);
-		$timestamp = strtotime($data[111]);
-		$info_date = date("Y-m-d H:i:s", $timestamp);
-		$researcher = mysql_real_escape_string($data[112]);
-		$complete_record = mysql_real_escape_string($data[113]);
-		$notes = mysql_real_escape_string($data[114]);
-					
-		if(!empty($researcher))
-		{
-			$query = "select * from ctn_location_info where location_id = $location_id";
-			$info_result = db_fetch_array(db_query($query));
-			if(!$info_result && $location_id)
-			{
-				$all_fields = "location_id, wheelchair_accessible, shareable_rent, logo, picture, info_date, researcher, complete_record, notes";
-				$all_values = "$location_id, $wheelchair_accessible, $shareable_rent, '$logo', '$picture', '$info_date', '$researcher', '$complete_record', '$notes'";
-				$query = "INSERT INTO ctn_location_info($all_fields) VALUES ($all_values)";
-				$result = db_query($query);	
-			}
-		}
+		return $ctn_taxonomy_terms;
 	}
 	
