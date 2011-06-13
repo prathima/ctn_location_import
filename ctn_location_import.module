@@ -70,7 +70,7 @@
 					{
 						$languages = array($data[15], $data[16], $data[17], $data[18], $data[19], $data[20], $data[21],
 								$data[22], $data[23], $data[24], $data[25], $data[26], $data[27], $data[28], $data[29],
-								$data[30], $data[31], $data[32], $data[33], $data[34], $data[35], $data[36], $data[37], $data[38], $data[39]);
+								$data[30], $data[31], $data[32], $data[33], $data[34], $data[35], $data[36], $data[37], $data[38]);
 						save_ctnterms($data, "Languages Served", 15, 39);
 						
 						$org_types = array($data[39], $data[40], $data[41], $data[42], $data[43], $data[44], $data[45], $data[46],
@@ -78,7 +78,7 @@
 						save_ctnterms($data, "Organization Type", 39, 54);
 						
 						$target_user_groups = array($data[55], $data[56], $data[57], $data[58], $data[59], $data[60], $data[61], $data[62],$data[63]);
-						save_ctnterms($data, "Target User Groups", 55, 64);
+						save_ctnterms($data, "Target User Groups", 55, 63);
 						
 						$types_of_services = array($data[64], $data[65], $data[66], $data[67], $data[68], $data[69], $data[70], $data[71],
 								$data[72],$data[73],$data[74],$data[75],$data[76],$data[77],$data[78],$data[79],$data[80],$data[81],
@@ -188,8 +188,8 @@
 	{
 		$terms = array();
 		$node = node_load($nid);
-		$terms = array_merge($terms, get_terms($data, $node, $languages, 15, 39));
-		$terms = array_merge($terms, get_terms($data, $node, $org_types, , 40, 55));
+		$terms = array_merge($terms, get_terms($data, $node, $languages, 15, 38));
+		$terms = array_merge($terms, get_terms($data, $node, $org_types, 39, 55));
 		$terms = array_merge($terms, get_terms($data, $node, $target_user_groups, 56, 63));
 		$terms = array_merge($terms, get_terms($data, $node, $types_of_services, 64, 87));
 		$terms = array_merge($terms, get_terms($data, $node, $other_hardware, 88, 97));
