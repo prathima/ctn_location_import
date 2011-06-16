@@ -136,18 +136,22 @@
 
 		if(!empty($name))
 		{
-			$org_users = user_search('search', trim($name));
-			if(!$org_users || count($org_users))
+			$org_user = user_load( array('name' => trim($name)));
+			
+			if(!$org_user)
 			{
-				$org_user_data = array('name' => trim($name), 'pass' => 'ctn');
-				$org_user = new stdClass();
-				$org_user = user_save($org_user, $org_user); 
-				
+				$org_user_data = array('name' => trim($name),
+					'pass' => user_password(), 
+					'init' => trim($name), 
+					'status' => 1, 
+					"authname_$module" => trim($name), 
+					'access' => time());
+				$org_user = user_save('', $org_user_data); 
 				drupal_set_message(t("Saving user: ".$org_user->uid), "warning");
 			}
 			else
 			{
-				$org_user = $org_users[0];
+				drupal_set_message(t("Found user: ".$org_user->uid), "warning");
 			}
 			
 			$node = new stdClass();
@@ -160,7 +164,7 @@
 			$node->promote = 1;
 			$node->sticky  = 0;
 			$node->format  = 1;
-			$node->name = $org_user->name;
+			$node->uid = $org_user->uid;
 			
 			$result = db_fetch_array(db_query('select * from node where title = "%s" limit 1', $name));
 			if(!$result)
