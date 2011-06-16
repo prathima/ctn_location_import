@@ -59,7 +59,12 @@
 		$limits = array();
 		$validators = array('file_validate_extensions' => array($limits['extensions']));
 		
-		if ($file = file_save_upload('upload_file', $validators, file_directory_path())) 
+		if( file_check_directory( file_directory_path() ) ) 
+		{
+			drupal_set_message(t('WARNING: Server '.file_directory_path(). 'is not accessible. Consult with site admin!', 'status') );
+		}
+		
+		if ($file = file_save_upload('upload_file', null, file_directory_path())) 
 		{
 			$row = 1;
 			if (($handle = fopen($file->filepath, "r")) !== FALSE) 
@@ -104,6 +109,10 @@
 			$message = 'Uploaded CSV file to DB.';
 			drupal_set_message(t($message));
 		}
+		else
+		{
+			drupal_set_message('ERROR: Uploading the file to ' . file_directory_path());
+		}
 	}
 	
 	
@@ -127,17 +136,31 @@
 
 		if(!empty($name))
 		{
+			$org_users = user_search('search', trim($name));
+			if(!$org_users || count($org_users))
+			{
+				$org_user_data = array('name' => trim($name), 'pass' => 'ctn');
+				$org_user = new stdClass();
+				$org_user = user_save($org_user, $org_user); 
+				
+				drupal_set_message(t("Saving user: ".$org_user->uid), "warning");
+			}
+			else
+			{
+				$org_user = $org_users[0];
+			}
+			
 			$node = new stdClass();
 			$node->title = trim($name);
 			$node->body = preg_replace('/[^(\x20-\x7F)]*/','', trim($about_org));
-			$node->type = 'page';
+			$node->type = 'uprofile';
 			$node->created = time();
 			$node->changed = $node->created;
 			$node->status  = 1;
 			$node->promote = 1;
 			$node->sticky  = 0;
 			$node->format  = 1;
-			$node->uid = $user->id;
+			$node->name = $org_user->name;
 			
 			$result = db_fetch_array(db_query('select * from node where title = "%s" limit 1', $name));
 			if(!$result)
