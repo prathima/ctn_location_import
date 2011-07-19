@@ -1,5 +1,4 @@
 <?php
-
 /**
 * Implementation of hook_block().
 * Adds a block that has new text.
@@ -128,8 +127,8 @@
 		$phone = $data[6];
 		$website = $data[7];
 		$email = $data[8];
-		$about_org = $data[9];
-		$about_program_offered = $data[10];
+		$about_org = preg_replace('/[^(\x20-\x7F)]*/','', trim($data[9]));
+		$about_program_offered = preg_replace('/[^(\x20-\x7F)]*/','', trim($data[10]));
 		$access_rights = $data[11];
 		$drop_infees = $data[12];
 		$class_workshop_fee = $data[13];
@@ -147,25 +146,24 @@
 					'status' => 1, 
 					"authname_$module" => trim($name), 
 					'access' => time());
-				$org_user = user_save('', $org_user_data); 
+				$org_user = user_save('', $org_user_data);
 				drupal_set_message(t("Saving user: ".$org_user->uid), "warning");
 			}
 			else
 			{
 				drupal_set_message(t("Found user: ".$org_user->uid), "warning");
 			}
-			
-			$node = new stdClass();
+		
+	
+			$node = new StdClass();
 			$node->title = trim($name);
-			$node->body = preg_replace('/[^(\x20-\x7F)]*/','', trim($about_org));
 			$node->type = 'uprofile';
-			$node->created = time();
-			$node->changed = $node->created;
 			$node->status  = 1;
-			$node->promote = 1;
-			$node->sticky  = 0;
-			$node->format  = 1;
 			$node->uid = $org_user->uid;
+			
+			$node->field_about_me = array(0 => array('value' => $about_org));
+			$node->field_programinfo = array(0 => array('value' => $about_program_offered));
+
 			
 			$result = db_fetch_array(db_query('select * from node where title = "%s" limit 1', $name));
 			if(!$result)
@@ -174,14 +172,27 @@
 			}
 			else
 			{
-				drupal_set_message(t("Updating Node: ".$name."(".$result['nid'] .")"), "warning");
 				$node->nid = $result['nid'];
+				drupal_set_message(t("Updating Node: ".$name."(".$result['nid'] .")"), "warning");
+				//node_delete($result['nid']);
 			}
 			node_save($node);
+						
+			$locationNode = new StdClass();
+			$locationNode->title = trim($name);
+			$locationNode->type = 'location';
+			$locationNode->uid = $org_user->uid;
+			$locationNode->nid = $node->nid;
+			node_save($locationNode);
+			
+			// delete cache entries for that url
+			//cache_clear_all(NULL, 'cache_block');
+			//cache_clear_all(NULL, 'cache_page');
 			
 			assign_ctnterms_to_location($node->nid, $data, $languages, $org_types, $target_user_groups, $types_of_services, $other_hardware, $operating_systems );
 		}
 	}
+	
 	
 	function save_ctnterms($data, $vocabName, $start, $end)
 	{
@@ -224,6 +235,8 @@
 		$terms = array_merge($terms, get_terms($data, $node, $operating_systems, 98, 105));
 		
 		taxonomy_node_save($node, $terms);
+		taxonomy_node_get_terms($node, 'tid', TRUE);
+
 	}
 	
 	function get_terms($data, $node, $ctn_terms, $start, $end)
