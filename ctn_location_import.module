@@ -73,6 +73,8 @@
 				{
 					if($row == 2)
 					{
+						
+						
 						$languages = array($data[15], $data[16], $data[17], $data[18], $data[19], $data[20], $data[21],
 								$data[22], $data[23], $data[24], $data[25], $data[26], $data[27], $data[28], $data[29],
 								$data[30], $data[31], $data[32], $data[33], $data[34], $data[35], $data[36], $data[37], $data[38]);
@@ -96,7 +98,8 @@
 						
 						$operating_systems = array($data[98], $data[99], $data[100], $data[101], $data[102], $data[103], $data[104], $data[105]);
 						save_ctnterms($data, "Operating System", 98, 105);
-
+						
+						
 						
 					}
 					if($row > 2)
@@ -163,12 +166,14 @@
 			
 			$node->field_about_me = array(0 => array('value' => $about_org));
 			$node->field_programinfo = array(0 => array('value' => $about_program_offered));
+			$node->field_homepage = array(0 => array('url' => $website));
+			
 
 			
-			$result = db_fetch_array(db_query('select * from node where title = "%s" limit 1', $name));
+			$result = db_fetch_array(db_query('select * from node where title = "%s" and type="uprofile" limit 1', $name));
 			if(!$result)
 			{
-				drupal_set_message(t("Adding new Node: ".$name), "warning");
+				drupal_set_message(t("Adding new Uprofile Node: ".$name), "warning");
 			}
 			else
 			{
@@ -182,7 +187,25 @@
 			$locationNode->title = trim($name);
 			$locationNode->type = 'location';
 			$locationNode->uid = $org_user->uid;
-			$locationNode->nid = $node->nid;
+			$locationNode->locations[0]['street'] = $address1;
+			$locationNode->locations[0]['city'] = $city;
+			$locationNode->locations[0]['province'] = $state;
+			$locationNode->locations[0]['postal_code'] = $zip;
+			$locationNode->field_phone[0][value]=$phone;
+			//$locationNode->field_homepage[0][value]=$phone;
+			
+			$result = db_fetch_array(db_query('select * from node where title = "%s" and type="location" limit 1', $name));
+			if(!$result)
+			{
+				drupal_set_message(t("Adding new Location Node: ".$name), "warning");
+			}
+			else
+			{
+				$locationNode->nid = $result['nid'];
+				drupal_set_message(t("Updating Node: ".$name."(".$result['nid'] .")"), "warning");
+				//node_delete($result['nid']);
+			}
+
 			node_save($locationNode);
 			
 			// delete cache entries for that url
@@ -227,6 +250,7 @@
 	{
 		$terms = array();
 		$node = node_load($nid);
+		
 		$terms = array_merge($terms, get_terms($data, $node, $languages, 15, 38));
 		$terms = array_merge($terms, get_terms($data, $node, $org_types, 39, 55));
 		$terms = array_merge($terms, get_terms($data, $node, $target_user_groups, 56, 63));
