@@ -99,8 +99,6 @@
 						$operating_systems = array($data[98], $data[99], $data[100], $data[101], $data[102], $data[103], $data[104], $data[105]);
 						save_ctnterms($data, "Operating System", 98, 105);
 						
-						
-						
 					}
 					if($row > 2)
 					{
@@ -166,7 +164,7 @@
 			
 			$node->field_about_me = array(0 => array('value' => $about_org));
 			$node->field_programinfo = array(0 => array('value' => $about_program_offered));
-			$node->field_homepage = array(0 => array('url' => $website));
+			$node->field_homepage = array(0 => array('title' => $name, 'url' => $website));
 			
 
 			
@@ -257,10 +255,36 @@
 		$terms = array_merge($terms, get_terms($data, $node, $types_of_services, 64, 87));
 		$terms = array_merge($terms, get_terms($data, $node, $other_hardware, 88, 97));
 		$terms = array_merge($terms, get_terms($data, $node, $operating_systems, 98, 105));
+		$terms = array_merge($terms, get_single_terms($data, "Access Rights", 11));
+		$terms = array_merge($terms, get_single_terms($data, "Drop-In Fees", 12));
 		
 		taxonomy_node_save($node, $terms);
 		taxonomy_node_get_terms($node, 'tid', TRUE);
 
+	}
+	
+	function get_single_terms($data, $vocabName, $column)
+	{
+		$ctn_taxonomy_terms = array();
+		
+		$vocabularies = taxonomy_get_vocabularies();
+		foreach($vocabularies as &$vocab)
+		{
+			if($vocab->name == $vocabName)
+			{
+
+				$result = db_query(db_rewrite_sql('SELECT  t.* FROM {term_data} t  WHERE t.vid = %d'), $vocab->vid);
+				while ($term = db_fetch_object($result)) 
+				{
+					if($term->name == $data[$column])
+					{
+						drupal_set_message(t("Setting CTN Term: ".$term->name."(".$term->tid.") to : ".$node->title."-".$node->nid), "warning");
+						array_push($ctn_taxonomy_terms, $term->tid);
+					}
+				}
+			}
+		}
+		return $ctn_taxonomy_terms;
 	}
 	
 	function get_terms($data, $node, $ctn_terms, $start, $end)
