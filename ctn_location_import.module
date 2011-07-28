@@ -257,13 +257,17 @@
 		$terms = array_merge($terms, get_terms($data, $node, $operating_systems, 98, 105));
 		$terms = array_merge($terms, get_single_terms($data, "Access Rights", 11));
 		$terms = array_merge($terms, get_single_terms($data, "Drop-In Fees", 12));
-		
+		$terms = array_merge($terms, get_single_terms($data, "Class/Workshop Fees", 13));
+		$terms = array_merge($terms, get_single_terms($data, "Number of Computers", 14));
+		$terms = array_merge($terms, get_single_terms($data, "Assistive Technology", 106, true));
+		$terms = array_merge($terms, get_single_terms($data, "Wheelchair Accessible", 107, true));
+		$terms = array_merge($terms, get_single_terms($data, "Rent/Share Lab To Other Groups", 108, true));
 		taxonomy_node_save($node, $terms);
 		taxonomy_node_get_terms($node, 'tid', TRUE);
 
 	}
 	
-	function get_single_terms($data, $vocabName, $column)
+	function get_single_terms($data, $vocabName, $column, $isBoolean = FALSE)
 	{
 		$ctn_taxonomy_terms = array();
 		
@@ -272,14 +276,35 @@
 		{
 			if($vocab->name == $vocabName)
 			{
-
+				//drupal_set_message(t("Comparing Vocab: ".$vocab->name."(".$vocabName.")" ), "warning");
+			
 				$result = db_query(db_rewrite_sql('SELECT  t.* FROM {term_data} t  WHERE t.vid = %d'), $vocab->vid);
-				while ($term = db_fetch_object($result)) 
+				if($isBoolean)
 				{
-					if($term->name == $data[$column])
+					while ($term = db_fetch_object($result)) 
 					{
-						drupal_set_message(t("Setting CTN Term: ".$term->name."(".$term->tid.") to : ".$node->title."-".$node->nid), "warning");
-						array_push($ctn_taxonomy_terms, $term->tid);
+						if((trim($data[$column]) == 'y' || trim($data[$column]) == 'Y') && $term->name == 'Yes')
+						{
+							//drupal_set_message(t("Setting CTN Term: ".$term->name."(".$term->tid.")" ), "warning");
+							array_push($ctn_taxonomy_terms, $term->tid);
+						}
+						
+						if((trim($data[$column]) == 'n' || trim($data[$column]) == 'N') && $term->name == 'No')
+						{
+							//drupal_set_message(t("Setting CTN Term: ".$term->name."(".$term->tid.")"), "warning");
+							array_push($ctn_taxonomy_terms, $term->tid);
+						}
+					}
+				}
+				else
+				{
+					while ($term = db_fetch_object($result)) 
+					{
+						if($term->name == $data[$column])
+						{
+							//drupal_set_message(t("Setting CTN Term: ".$term->name."(".$term->tid.")"), "warning");
+							array_push($ctn_taxonomy_terms, $term->tid);
+						}
 					}
 				}
 			}
@@ -298,7 +323,7 @@
 				$ctn_term_results = taxonomy_get_term_by_name($ctn_term);
 				$tid = $ctn_term_results[0]->tid;
 				
-				drupal_set_message(t("Setting CTN Term: ".$ctn_term."(".$tid.") to : ".$node->title."-".$node->nid), "warning");
+				//drupal_set_message(t("Setting CTN Term: ".$ctn_term."(".$tid.") to : ".$node->title."-".$node->nid), "warning");
 				array_push($ctn_taxonomy_terms, $tid);
 			}
 		}
